@@ -1,0 +1,43 @@
+using System.Text.RegularExpressions;
+using UnsecuredAPIKeys.Data.Common;
+using UnsecuredAPIKeys.Providers.Common;
+
+namespace UnsecuredAPIKeys.Providers._Interfaces
+{
+    /// <summary>
+    /// Defines the contract for an API key provider, responsible for
+    /// identifying and validating keys for a specific service.
+    /// Lite version: OpenAI, Anthropic, Google only.
+    /// Full version: www.UnsecuredAPIKeys.com
+    /// </summary>
+    public interface IApiKeyProvider
+    {
+        /// <summary>
+        /// Gets the unique name of the provider (e.g., "OpenAI", "Anthropic").
+        /// </summary>
+        string ProviderName { get; }
+
+        /// <summary>
+        /// Gets the corresponding ApiTypeEnum value for this provider.
+        /// </summary>
+        ApiTypeEnum ApiType { get; }
+
+        /// <summary>
+        /// Gets the list of regex patterns used to identify potential keys for this provider.
+        /// </summary>
+        IEnumerable<string> RegexPatterns { get; }
+
+        /// <summary>
+        /// Gets pre-compiled regex instances for each pattern.
+        /// </summary>
+        IReadOnlyList<Regex> CompiledRegexes { get; }
+
+        /// <summary>
+        /// Asynchronously validates the given API key against the provider's service.
+        /// </summary>
+        /// <param name="apiKey">The API key string to validate.</param>
+        /// <param name="httpClientFactory">The IHttpClientFactory for creating HttpClient instances.</param>
+        /// <returns>A ValidationResult indicating the outcome of the validation attempt.</returns>
+        Task<ValidationResult> ValidateKeyAsync(string apiKey, IHttpClientFactory httpClientFactory);
+    }
+}

@@ -1,0 +1,95 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using UnsecuredAPIKeys.Data.Models;
+
+namespace UnsecuredAPIKeys.Data
+{
+    /// <summary>
+    /// SQLite database context for UnsecuredAPIKeys Lite.
+    /// Full version with PostgreSQL: www.UnsecuredAPIKeys.com
+    /// </summary>
+    public class DBContext : DbContext
+    {
+        private readonly string _dbPath;
+
+        public DBContext(DbContextOptions<DBContext> options) : base(options)
+        {
+            _dbPath = "unsecuredapikeys.db";
+        }
+
+        public DBContext(string dbPath = "unsecuredapikeys.db")
+        {
+            _dbPath = dbPath;
+        }
+
+        // Core entities
+        public DbSet<APIKey> APIKeys { get; set; } = null!;
+        public DbSet<RepoReference> RepoReferences { get; set; } = null!;
+        public DbSet<SearchQuery> SearchQueries { get; set; } = null!;
+        public DbSet<SearchProviderToken> SearchProviderTokens { get; set; } = null!;
+        public DbSet<ApplicationSetting> ApplicationSettings { get; set; } = null!;
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder
+                    .UseSqlite($"Data Source={_dbPath}")
+                    .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            }
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // APIKey indexes for performance
+            modelBuilder.Entity<APIKey>()
+                .HasIndex(k => k.ApiKey)
+                .IsUnique()
+                .HasDatabaseName("IX_APIKeys_ApiKey");
+
+            modelBuilder.Entity<APIKey>()
+                .HasIndex(k => new { k.Status, k.ApiType })
+                .HasDatabaseName("IX_APIKeys_Status_ApiType");
+
+            modelBuilder.Entity<APIKey>()
+                .HasIndex(k => k.LastCheckedUTC)
+                .HasDatabaseName("IX_APIKeys_LastCheckedUTC");
+
+            modelBuilder.Entity<APIKey>()
+                .HasIndex(k => k.Status)
+                .HasDatabaseName("IX_APIKeys_Status");
+
+            // RepoReference indexes
+            modelBuilder.Entity<RepoReference>()
+                .HasIndex(r => r.APIKeyId)
+                .HasDatabaseName("IX_RepoReferences_ApiKeyId");
+
+            // SearchQuery indexes
+            modelBuilder.Entity<SearchQuery>()
+                .HasIndex(q => new { q.IsEnabled, q.LastSearchUTC })
+                .HasDatabaseName("IX_SearchQueries_IsEnabled_LastSearchUTC");
+
+            modelBuilder.Entity<SearchQuery>()
+                .HasIndex(q => q.Query)
+                .HasDatabaseName("IX_SearchQueries_Query");
+
+            // SearchProviderToken indexes
+            modelBuilder.Entity<SearchProviderToken>()
+                .HasIndex(t => t.SearchProvider)
+                .HasDatabaseName("IX_SearchProviderTokens_SearchProvider");
+
+            modelBuilder.Entity<SearchProviderToken>()
+                .HasIndex(t => new { t.SearchProvider, t.IsEnabled })
+                .HasDatabaseName("IX_SearchProviderTokens_Provider_Enabled");
+
+            // Relationships
+            modelBuilder.Entity<RepoReference>()
+                .HasOne(r => r.APIKey)
+                .WithMany(k => k.References)
+                .HasForeignKey(r => r.APIKeyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}

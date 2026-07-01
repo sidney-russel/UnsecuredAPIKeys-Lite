@@ -1,0 +1,47 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# User-specific files
+*.db
+*.db-shm
+*.db-wal
+*.user
+*.suo
+.vs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sensitive files
+appsettings.json
+appsettings.*.json
+*.key
+*.pem
+
+# Export files
+*.csv
+*.json
+!appsettings.example.json
+
+# Test results
+TestResults/
+
+# Logs
+*.log
+logs/
